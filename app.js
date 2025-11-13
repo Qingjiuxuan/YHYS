@@ -5,37 +5,120 @@ class P2PChatApp {
         this.network = new P2PNetwork();
         this.currentUser = null;
         this.activeContact = null;
-        this.contactStatus = new Map(); // 跟踪联系人状态
+        this.contactStatus = new Map();
+        this.initialized = false;
         
         this.init();
     }
 
     async init() {
         try {
-            await this.storage.init();
+            console.log('应用初始化开始...');
             
+            // 显示加载状态
+            this.showLoading('正在初始化应用...');
+            
+            // 先初始化存储
+            await this.storage.init();
+            console.log('存储初始化完成');
+            
+            // 检查现有身份
             const existingIdentity = await this.storage.getIdentity();
+            
             if (existingIdentity) {
+                console.log('发现现有身份:', existingIdentity.peerId);
                 this.currentUser = existingIdentity;
                 this.crypto.currentUser = existingIdentity;
+                
                 this.showChatInterface();
                 try {
+                    this.showLoading('正在连接网络...');
                     await this.network.init(existingIdentity);
                     this.setupNetworkHandlers();
-                    this.showNotification('应用初始化成功！');
+                    console.log('网络初始化完成');
+                    this.hideLoading();
                 } catch (error) {
+                    console.error('网络初始化失败:', error);
                     this.showNotification(`网络初始化失败: ${error.message}`);
                     // 如果网络初始化失败，重新生成身份
                     await this.generateIdentity();
                 }
             } else {
+                console.log('未发现现有身份，显示设置界面');
                 this.showIdentitySetup();
+                this.hideLoading();
             }
 
             this.setupEventListeners();
+            this.initialized = true;
+            console.log('应用初始化完成');
+            
         } catch (error) {
-            this.showNotification(`应用启动失败: ${error.message}`);
+            console.error('应用初始化失败:', error);
+            this.hideLoading();
+            this.showNotification(`应用初始化失败: ${error.message}`);
+            
+            // 显示错误界面
+            this.showErrorScreen(error.message);
         }
+    }
+
+    // 显示加载状态
+    showLoading(message = '加载中...') {
+        let loadingEl = document.getElementById('loading');
+        if (!loadingEl) {
+            loadingEl = document.createElement('div');
+            loadingEl.id = 'loading';
+            loadingEl.innerHTML = `
+                <div class="loading-overlay">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">${message}</div>
+                </div>
+            `;
+            document.body.appendChild(loadingEl);
+        }
+        loadingEl.style.display = 'block';
+    }
+
+    // 隐藏加载状态
+    hideLoading() {
+        const loadingEl = document.getElementById('loading');
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
+        }
+    }
+
+    // 显示错误界面
+    showErrorScreen(errorMessage) {
+        const appContainer = document.querySelector('.app-container');
+        appContainer.innerHTML = `
+            <div class="error-screen">
+                <h1>😕 初始化失败</h1>
+                <div class="error-card">
+                    <p>应用初始化过程中出现错误：</p>
+                    <code class="error-message">${errorMessage}</code>
+                    <div class="error-actions">
+                        <button id="retry-init">重试</button>
+                        <button id="clear-data" class="danger">清除所有数据并重试</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('retry-init').addEventListener('click', () => {
+            location.reload();
+        });
+
+        document.getElementById('clear-data').addEventListener('click', async () => {
+            try {
+                this.showLoading('正在清除数据...');
+                await this.storage.destroyAllData();
+                location.reload();
+            } catch (error) {
+                this.showNotification(`清除数据失败: ${error.message}`);
+                this.hideLoading();
+            }
+        });
     }
 
     setupEventListeners() {
@@ -87,12 +170,6 @@ class P2PChatApp {
             this.updateContactsList();
         });
 
-        // 消息发送成功
-        this.network.on('message-sent', (data) => {
-            this.displayMessage(data.message, data.contact);
-            this.updateContactsList();
-        });
-
         // 联系人身份就绪
         this.network.on('contact-identity-ready', (contact) => {
             console.log('联系人身份就绪:', contact.peerId);
@@ -123,6 +200,8 @@ class P2PChatApp {
     // 生成新身份
     async generateIdentity() {
         try {
+            this.showLoading('正在生成身份...');
+            
             const identity = this.crypto.generateIdentity();
             this.currentUser = identity;
             this.crypto.currentUser = identity;
@@ -133,10 +212,25 @@ class P2PChatApp {
             document.getElementById('user-did').textContent = identity.did;
             document.getElementById('identity-display').classList.remove('hidden');
             
-            this.showNotification('身份创建成功！');
+            // 初始化网络
+            try {
+                this.showLoading('正在初始化网络...');
+                await this.network.init(identity);
+                this.setupNetworkHandlers();
+                this.hideLoading();
+                this.showNotification('身份创建成功！');
+            } catch (error) {
+                console.error('网络初始化失败:', error);
+                this.hideLoading();
+                this.showNotification(`网络初始化失败: ${error.message}`);
+                throw error;
+            }
             
         } catch (error) {
+            console.error('生成身份失败:', error);
+            this.hideLoading();
             this.showNotification(`身份创建失败: ${error.message}`);
+            throw error;
         }
     }
 
@@ -151,26 +245,51 @@ class P2PChatApp {
         document.getElementById('identity-setup').classList.remove('active');
         document.getElementById('chat-interface').classList.add('active');
         
-        if (this.currentUser) {
-            document.getElementById('current-user').textContent = this.currentUser.did;
-        }
+        document.getElementById('current-user').textContent = this.currentUser.did;
         this.loadContacts();
+        this.updateMessageInputState(false);
+    }
+
+    // 验证 PeerId 格式
+    isValidPeerId(peerId) {
+        if (!peerId || peerId.length < 1 || peerId.length > 64) {
+            return false;
+        }
+        
+        const validPattern = /^[a-zA-Z0-9\-_]+$/;
+        return validPattern.test(peerId);
     }
 
     // 添加联系人
     async addContact() {
+        // 检查应用是否已初始化
+        if (!this.initialized) {
+            this.showNotification('应用尚未初始化完成，请稍后重试');
+            return;
+        }
+
         const contactInput = document.getElementById('contact-id').value.trim();
         if (!contactInput) {
             this.showNotification('请输入联系人ID');
             return;
         }
 
-        // 检查是否已经是联系人
-        const existingContact = await this.storage.get('contacts', contactInput);
-        if (existingContact) {
-            this.showNotification('该联系人已存在');
-            this.selectContact(existingContact);
+        // 检查输入格式
+        if (!this.isValidPeerId(contactInput)) {
+            this.showNotification('联系人ID格式无效，请检查输入');
             return;
+        }
+
+        // 检查是否已经是联系人
+        try {
+            const existingContact = await this.storage.getContact(contactInput);
+            if (existingContact) {
+                this.showNotification('该联系人已存在');
+                this.selectContact(existingContact);
+                return;
+            }
+        } catch (error) {
+            console.error('检查联系人存在性失败:', error);
         }
 
         try {
@@ -197,9 +316,16 @@ class P2PChatApp {
             this.showNotification(`已发起连接到 ${contactInput}，等待身份交换...`);
             
         } catch (error) {
+            console.error('添加联系人失败:', error);
             this.showNotification(`添加联系人失败: ${error.message}`);
+            
             // 清理临时联系人
-            await this.storage.delete('contacts', contactInput);
+            try {
+                await this.storage.delete('contacts', contactInput);
+            } catch (deleteError) {
+                console.error('清理临时联系人失败:', deleteError);
+            }
+            
             this.contactStatus.delete(contactInput);
             this.updateContactsList();
         }
@@ -324,7 +450,7 @@ class P2PChatApp {
         contactsList.innerHTML = '';
         
         if (contacts.length === 0) {
-            contactsList.innerHTML = '<div class="no-contacts">暂无联系人<br>在右侧输入对方ID添加联系人</div>';
+            contactsList.innerHTML = '<div class="no-contacts">暂无联系人<br><small>在右侧输入框添加联系人</small></div>';
             return;
         }
         
@@ -345,22 +471,21 @@ class P2PChatApp {
                     statusText = '🟢 在线';
                     statusClass = 'online-ready';
                 } else {
-                    statusText = '🟡 交换身份中';
+                    statusText = '🟡 交换身份中...';
                     statusClass = 'online-connecting';
                 }
             }
             
-            const displayName = contact.did && contact.did !== '等待身份交换...' ? 
-                contact.did.substring(0, 20) + (contact.did.length > 20 ? '...' : '') : 
-                contact.peerId;
+            const displayId = contact.did && contact.did !== '等待身份交换...' ? 
+                contact.did : contact.peerId;
             
             contactElement.innerHTML = `
                 <div class="contact-info">
-                    <div class="contact-name" title="${contact.did || contact.peerId}">${displayName}</div>
+                    <div class="contact-name">${displayId}</div>
                     <div class="contact-status ${statusClass}">${statusText}</div>
-                    ${!contact.publicKey ? '<div class="contact-warning">⚠️ 等待身份交换</div>' : ''}
+                    ${!contact.publicKey ? '<div class="contact-warning">⚠️ 身份交换中</div>' : ''}
                 </div>
-                <button class="destroy-contact" data-peerid="${contact.peerId}" title="删除联系人">🗑️</button>
+                <button class="destroy-contact" data-peerid="${contact.peerId}">🗑️</button>
             `;
             
             contactElement.addEventListener('click', () => {
@@ -379,21 +504,27 @@ class P2PChatApp {
 
     // 加载消息
     async loadMessages(contactPeerId = null) {
-        const peerId = contactPeerId || (this.activeContact ? this.activeContact.peerId : null);
-        if (!peerId) return;
+        const did = contactPeerId || (this.activeContact ? this.activeContact.peerId : null);
+        if (!did) return;
 
-        const messages = await this.storage.getMessages(peerId);
+        const messages = await this.storage.getMessages(did);
         const messagesContainer = document.getElementById('chat-messages');
         
         messagesContainer.innerHTML = '';
         
         if (messages.length === 0) {
-            messagesContainer.innerHTML = '<div class="no-messages">暂无消息，开始聊天吧！</div>';
+            messagesContainer.innerHTML = `
+                <div class="no-messages">
+                    <h3>开始聊天</h3>
+                    <p>这是你与 ${this.activeContact?.did || this.activeContact?.peerId} 的对话</p>
+                    <p>发送消息开始聊天吧！</p>
+                </div>
+            `;
             return;
         }
         
         messages.forEach(message => {
-            this.displayMessage(message, { peerId });
+            this.displayMessage(message, { peerId: did });
         });
     }
 
@@ -404,6 +535,8 @@ class P2PChatApp {
         }
 
         try {
+            this.showLoading('正在销毁数据...');
+            
             // 向所有在线联系人发送销毁命令
             const contacts = await this.storage.getContacts();
             for (const contact of contacts) {
@@ -411,7 +544,7 @@ class P2PChatApp {
                     try {
                         await this.network.sendDestroyCommand(contact.peerId);
                     } catch (error) {
-                        console.log(`无法通知 ${contact.peerId}: ${error.message}`);
+                        console.error('发送销毁命令失败:', error);
                     }
                 }
             }
@@ -421,22 +554,19 @@ class P2PChatApp {
             this.network.destroy();
             this.crypto.secureWipe();
             
-            this.showNotification('所有数据已安全销毁，页面即将刷新...');
-            
             // 重新加载页面
-            setTimeout(() => {
-                location.reload();
-            }, 2000);
+            location.reload();
             
         } catch (error) {
+            this.hideLoading();
             this.showNotification(`销毁失败: ${error.message}`);
         }
     }
 
     // 销毁特定联系人数据
     async destroyContactData(contactPeerId) {
-        const contact = await this.storage.get('contacts', contactPeerId);
-        const contactName = contact ? (contact.did || contact.peerId) : contactPeerId;
+        const contact = await this.storage.getContact(contactPeerId);
+        const contactName = contact?.did || contact?.peerId || contactPeerId;
         
         if (!confirm(`确定要销毁与 ${contactName} 的所有聊天数据吗？`)) {
             return;
@@ -447,7 +577,7 @@ class P2PChatApp {
             try {
                 await this.network.sendDestroyCommand(contactPeerId);
             } catch (error) {
-                console.log(`无法通知对方: ${error.message}`);
+                console.error('发送销毁命令失败:', error);
             }
             
             // 销毁本地数据
@@ -466,50 +596,46 @@ class P2PChatApp {
     removeContactFromUI(contactPeerId) {
         if (this.activeContact && this.activeContact.peerId === contactPeerId) {
             this.activeContact = null;
-            document.getElementById('chat-messages').innerHTML = '<div class="no-messages">请选择一个联系人开始聊天</div>';
+            document.getElementById('chat-messages').innerHTML = '';
             this.updateMessageInputState(false);
         }
+        this.contactStatus.delete(contactPeerId);
         this.updateContactsList();
     }
 
     // 显示通知
-    showNotification(message) {
-        // 移除已有的通知
+    showNotification(message, duration = 3000) {
+        // 移除现有的通知
         const existingNotifications = document.querySelectorAll('.notification');
         existingNotifications.forEach(notification => {
             document.body.removeChild(notification);
         });
 
-        // 创建新通知
         const notification = document.createElement('div');
         notification.className = 'notification';
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #2c3e50;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
-            z-index: 1000;
-            max-width: 300px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            border-left: 4px solid #3498db;
-            animation: slideIn 0.3s ease-out;
-        `;
         notification.textContent = message;
         
         document.body.appendChild(notification);
         
+        // 显示动画
         setTimeout(() => {
-            if (document.body.contains(notification)) {
-                document.body.removeChild(notification);
-            }
-        }, 4000);
+            notification.classList.add('show');
+        }, 10);
+        
+        // 自动隐藏
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, duration);
     }
 
     // HTML转义
     escapeHtml(unsafe) {
+        if (!unsafe) return '';
         return unsafe
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
@@ -518,94 +644,6 @@ class P2PChatApp {
             .replace(/'/g, "&#039;");
     }
 }
-
-// 添加CSS动画
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    .no-contacts, .no-messages {
-        text-align: center;
-        padding: 40px 20px;
-        color: #7f8c8d;
-        font-style: italic;
-        line-height: 1.5;
-    }
-    
-    .contact-info {
-        flex: 1;
-    }
-    
-    .contact-name {
-        font-weight: 500;
-        margin-bottom: 4px;
-    }
-    
-    .contact-status {
-        font-size: 12px;
-    }
-    
-    .contact-status.online-ready {
-        color: #27ae60;
-    }
-    
-    .contact-status.online-connecting {
-        color: #f39c12;
-    }
-    
-    .contact-status.offline {
-        color: #95a5a6;
-    }
-    
-    .contact-warning {
-        font-size: 11px;
-        color: #e74c3c;
-        margin-top: 2px;
-    }
-    
-    .message-input textarea:disabled {
-        background-color: #f8f9fa;
-        color: #6c757d;
-        cursor: not-allowed;
-    }
-    
-    button:disabled {
-        background-color: #6c757d;
-        cursor: not-allowed;
-    }
-    
-    button:disabled:hover {
-        background-color: #6c757d;
-    }
-    
-    .destroy-contact {
-        background: #e74c3c;
-        padding: 6px 10px;
-        font-size: 12px;
-        border-radius: 4px;
-    }
-    
-    .destroy-contact:hover {
-        background: #c0392b;
-    }
-    
-    .self-destruct-label {
-        font-size: 11px;
-        color: #e74c3c;
-        margin-top: 4px;
-        font-weight: bold;
-    }
-`;
-document.head.appendChild(style);
 
 // 启动应用
 document.addEventListener('DOMContentLoaded', () => {
