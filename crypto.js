@@ -1,23 +1,52 @@
 class CryptoManager {
     constructor() {
         this.keyPair = null;
-        this.sharedSecrets = new Map(); // contactId -> shared secret
+        this.sharedSecrets = new Map();
     }
 
-    // 生成身份密钥对
+    // 生成身份密钥对 - 修复版本
     generateIdentity() {
         this.keyPair = nacl.box.keyPair();
+        
+        // 生成符合 PeerJS 要求的 ID 格式
+        const peerId = this.generatePeerId(this.keyPair.publicKey);
+        
         return {
             publicKey: nacl.util.encodeBase64(this.keyPair.publicKey),
             privateKey: nacl.util.encodeBase64(this.keyPair.secretKey),
-            did: this.generateDID(this.keyPair.publicKey)
+            did: `did:peer:1:${peerId}`,
+            peerId: peerId  // 添加 peerId 字段用于 PeerJS
         };
     }
 
-    // 生成DID
-    generateDID(publicKey) {
-        const hash = nacl.util.encodeBase64(publicKey.slice(0, 16));
-        return `did:peer:1:${hash}`;
+    // 生成符合 PeerJS 要求的 ID
+    generatePeerId(publicKey) {
+        // PeerJS ID 要求：只包含字母、数字、连字符、下划线
+        // 使用公钥的前16字节生成base64，然后替换非法字符
+        
+        const keyBytes = publicKey.slice(0, 16);
+        let base64 = nacl.util.encodeBase64(keyBytes);
+        
+        // 替换 PeerJS 不允许的字符
+        base64 = base64
+            .replace(/\+/g, '-')  // + -> -
+            .replace(/\//g, '_')  // / -> _
+            .replace(/=/g, '');   // 移除 =
+        
+        // 确保以字母开头（PeerJS 要求）
+        if (!/^[a-zA-Z]/.test(base64)) {
+            base64 = 'p' + base64;  // 添加前缀
+        }
+        
+        // 限制长度在 64 字符以内
+        return base64.substring(0, 63);
+    }
+
+    // 生成显示用的 DID（仅用于显示）
+    generateDisplayDID(publicKey) {
+        const keyBytes = publicKey.slice(0, 8); // 只取前8字节用于显示
+        const hash = nacl.util.encodeBase64(keyBytes);
+        return `did:peer:1:${hash.substring(0, 16)}`;
     }
 
     // 导出公钥（安全）
@@ -102,6 +131,86 @@ class CryptoManager {
     secureWipe() {
         if (this.keyPair) {
             // 覆盖密钥内存
+            nacl.memzero(this.keyPair.secretKey);
+            nacl.memzero(this.keyPair.publicKey);
+        }
+        this.keyPair = null;
+        this.sharedSecrets.clear();
+    }
+
+    getPublicKey() {
+        return this.keyPair ? nacl.util.encodeBase64(this.keyPair.publicKey) : null;
+    }
+
+    computeSharedSecret(theirPublicKeyBase64) {
+        const theirPublicKey = nacl.util.decodeBase64(theirPublicKeyBase64);
+        const sharedSecret = nacl.box.before(theirPublicKey, this.keyPair.secretKey);
+        return nacl.util.encodeBase64(sharedSecret);
+    }
+
+    encryptMessage(message, recipientPublicKey) {
+        const sharedSecret = this.computeSharedSecret(recipientPublicKey);
+        const nonce = nacl.randomBytes(nacl.box.nonceLength);
+        const messageBytes = nacl.util.decodeUTF8(message);
+        
+        const encrypted = nacl.box.after(messageBytes, nonce, nacl.util.decodeBase64(sharedSecret));
+        return {
+            encrypted: nacl.util.encodeBase64(encrypted),
+            nonce: nacl.util.encodeBase64(nonce),
+            timestamp: Date.now()
+        };
+    }
+
+    decryptMessage(encryptedData, senderPublicKey) {
+        try {
+            const sharedSecret = this.computeSharedSecret(senderPublicKey);
+            const nonce = nacl.util.decodeBase64(encryptedData.nonce);
+            const encrypted = nacl.util.decodeBase64(encryptedData.encrypted);
+            
+            const decrypted = nacl.box.open.after(encrypted, nonce, nacl.util.decodeBase64(sharedSecret));
+            if (!decrypted) throw new Error('解密失败');
+            
+            return nacl.util.encodeUTF8(decrypted);
+        } catch (error) {
+            console.error('解密错误:', error);
+            return null;
+        }
+    }
+
+    generateSelfDestructKey() {
+        return nacl.util.encodeBase64(nacl.randomBytes(32));
+    }
+
+    encryptWithSelfDestructKey(message, selfDestructKey) {
+        const key = nacl.util.decodeBase64(selfDestructKey);
+        const nonce = nacl.randomBytes(24);
+        const messageBytes = nacl.util.decodeUTF8(message);
+        
+        const encrypted = nacl.secretbox(messageBytes, nonce, key);
+        return {
+            encrypted: nacl.util.encodeBase64(encrypted),
+            nonce: nacl.util.encodeBase64(nonce),
+            type: 'self-destruct'
+        };
+    }
+
+    decryptWithSelfDestructKey(encryptedData, selfDestructKey) {
+        try {
+            const key = nacl.util.decodeBase64(selfDestructKey);
+            const nonce = nacl.util.decodeBase64(encryptedData.nonce);
+            const encrypted = nacl.util.decodeBase64(encryptedData.encrypted);
+            
+            const decrypted = nacl.secretbox.open(encrypted, nonce, key);
+            if (!decrypted) throw new Error('自毁消息解密失败');
+            
+            return nacl.util.encodeUTF8(decrypted);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    secureWipe() {
+        if (this.keyPair) {
             nacl.memzero(this.keyPair.secretKey);
             nacl.memzero(this.keyPair.publicKey);
         }
