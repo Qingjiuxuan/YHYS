@@ -1,180 +1,206 @@
-/* 移动端优先的响应式设计 */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
-    padding: 0;
-    font-size: 16px;
-    line-height: 1.5;
+    padding: 20px;
 }
 
-/* 移动端安全区域支持 */
 .app-container {
-    max-width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
     background: white;
-    min-height: 100vh;
-    min-height: 100dvh; /* 动态视口高度 */
-    position: relative;
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    min-height: 90vh;
 }
 
-/* 移动端屏幕适配 */
 .screen {
     display: none;
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
+    height: 100%;
 }
 
 .screen.active {
-    display: flex;
-    flex-direction: column;
+    display: block;
 }
 
-/* 移动端身份设置 */
+/* 身份设置界面 */
 #identity-setup {
-    padding: 20px;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    background: white;
+    padding: 40px;
+    text-align: center;
+}
+
+h1 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 2.5rem;
 }
 
 .card {
     background: #f8f9fa;
-    padding: 25px 20px;
-    border-radius: 16px;
-    margin-top: 0;
+    padding: 30px;
+    border-radius: 12px;
+    margin-top: 20px;
     width: 100%;
-    max-width: 100%;
-    border: 1px solid #e9ecef;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-/* 移动端按钮优化 */
+.card h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
 button {
     background: #667eea;
     color: white;
     border: none;
-    padding: 16px 24px;
-    border-radius: 12px;
+    padding: 12px 24px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 17px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    min-height: 54px;
-    width: 100%;
-    margin: 8px 0;
-    touch-action: manipulation;
+    font-size: 16px;
+    transition: background 0.3s;
+    font-weight: 500;
 }
 
-button:active {
-    transform: scale(0.98);
+button:hover {
     background: #5a6fd8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 button.danger {
     background: #e74c3c;
 }
 
-button.danger:active {
+button.danger:hover {
     background: #c0392b;
 }
 
-/* 移动端聊天头部 */
+.hidden {
+    display: none !important;
+}
+
+#identity-display {
+    margin-top: 20px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+#user-did {
+    display: block;
+    word-break: break-all;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+    font-size: 0.9rem;
+}
+
+/* 聊天界面 */
 .chat-header {
     background: #2c3e50;
     color: white;
-    padding: 16px 20px;
+    padding: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 70px;
-    flex-shrink: 0;
 }
 
 .chat-header h2 {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 1.5rem;
 }
 
 .user-info {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
+    align-items: center;
+    gap: 15px;
 }
 
-#destroy-all {
-    width: auto;
-    padding: 8px 12px;
-    font-size: 14px;
-    min-height: auto;
+#current-user {
+    font-size: 0.9rem;
+    opacity: 0.9;
 }
 
-/* 移动端聊天容器 */
 .chat-container {
     display: flex;
-    flex-direction: column;
-    height: calc(100vh - 70px);
-    height: calc(100dvh - 70px);
+    height: calc(90vh - 80px);
 }
 
-/* 移动端联系人面板 */
+/* 联系人面板 */
 .contacts-panel {
-    width: 100%;
-    border-bottom: 1px solid #eee;
+    width: 300px;
+    border-right: 1px solid #eee;
     background: #f8f9fa;
-    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .contact-search {
-    padding: 16px;
+    padding: 20px;
     border-bottom: 1px solid #eee;
-    display: flex;
-    gap: 12px;
+    background: white;
 }
 
 .contact-search input {
-    flex: 1;
-    padding: 14px;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
     border: 1px solid #ddd;
-    border-radius: 10px;
-    font-size: 16px;
-    min-height: 50px;
+    border-radius: 6px;
+    font-size: 14px;
 }
 
-.contact-search button {
-    width: auto;
-    min-width: 100px;
-    margin: 0;
+.contact-search input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 .contacts-list {
-    padding: 8px;
-    max-height: 200px;
+    flex: 1;
+    padding: 10px;
     overflow-y: auto;
 }
 
+.no-contacts {
+    text-align: center;
+    padding: 40px 20px;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
 .contact-item {
-    padding: 16px;
+    padding: 15px;
     border-bottom: 1px solid #eee;
     cursor: pointer;
     transition: background 0.3s;
-    border-radius: 10px;
-    margin: 4px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.contact-item:active {
+.contact-item:hover {
     background: #e9ecef;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .contact-item.active {
@@ -182,72 +208,93 @@ button.danger:active {
     color: white;
 }
 
+.contact-info {
+    flex: 1;
+}
+
 .contact-name {
     font-weight: 500;
-    font-size: 16px;
+    margin-bottom: 5px;
+    word-break: break-all;
+    font-size: 0.9rem;
 }
 
 .contact-status {
-    font-size: 12px;
-    opacity: 0.8;
+    font-size: 0.8rem;
+}
+
+.contact-status.online-ready {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.contact-status.online-connecting {
+    color: #f39c12;
+}
+
+.contact-status.offline {
+    color: #95a5a6;
+}
+
+.contact-warning {
+    font-size: 0.7rem;
+    color: #e74c3c;
+    margin-top: 4px;
 }
 
 .destroy-contact {
-    width: auto;
-    padding: 6px 10px;
-    font-size: 12px;
-    min-height: auto;
     background: #e74c3c;
+    padding: 5px 10px;
+    font-size: 12px;
+    border-radius: 4px;
 }
 
-/* 移动端聊天区域 */
+.destroy-contact:hover {
+    background: #c0392b;
+}
+
+/* 聊天区域 */
 .chat-area {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: white;
 }
 
 .messages-container {
     flex: 1;
-    padding: 16px;
+    padding: 20px;
     overflow-y: auto;
     background: white;
-    -webkit-overflow-scrolling: touch; /*  iOS 平滑滚动 */
+    display: flex;
+    flex-direction: column;
 }
 
 .message {
-    margin-bottom: 16px;
-    padding: 14px 18px;
-    border-radius: 18px;
-    max-width: 85%;
+    margin-bottom: 15px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    max-width: 70%;
     word-wrap: break-word;
     position: relative;
-    animation: messageAppear 0.3s ease;
+    animation: fadeIn 0.3s ease;
 }
 
-@keyframes messageAppear {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .message.received {
     background: #f1f3f4;
     margin-right: auto;
-    border-bottom-left-radius: 6px;
+    border-bottom-left-radius: 4px;
 }
 
 .message.sent {
     background: #667eea;
     color: white;
     margin-left: auto;
-    border-bottom-right-radius: 6px;
+    border-bottom-right-radius: 4px;
 }
 
 .message.self-destruct {
@@ -256,191 +303,231 @@ button.danger:active {
 }
 
 .message-content {
-    font-size: 16px;
+    margin-bottom: 5px;
     line-height: 1.4;
 }
 
 .message-time {
-    font-size: 12px;
+    font-size: 0.7rem;
     opacity: 0.7;
-    margin-top: 4px;
+    text-align: right;
 }
 
 .self-destruct-label {
-    font-size: 12px;
-    color: #e74c3c;
-    margin-top: 6px;
-    font-weight: 600;
+    font-size: 0.7rem;
+    margin-top: 5px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-/* 移动端消息输入 */
+/* 消息输入区域 */
 .message-input {
-    padding: 16px;
+    padding: 20px;
     border-top: 1px solid #eee;
-    background: white;
-    flex-shrink: 0;
+    background: #f8f9fa;
 }
 
 .message-input textarea {
     width: 100%;
     height: 80px;
-    padding: 14px;
+    padding: 12px;
     border: 1px solid #ddd;
-    border-radius: 12px;
-    resize: none;
-    font-size: 16px;
+    border-radius: 8px;
+    resize: vertical;
+    margin-bottom: 10px;
     font-family: inherit;
-    margin-bottom: 12px;
-    line-height: 1.4;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.message-input textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.message-input textarea:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
 }
 
 .message-options {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .message-options label {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 15px;
-    padding: 8px 0;
+    font-size: 0.9rem;
+    color: #495057;
 }
 
 #self-destruct {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
 }
 
 #ttl {
     width: 60px;
-    padding: 8px;
+    padding: 5px;
     border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+button:disabled:hover {
+    background-color: #6c757d;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 通知样式 */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #333;
+    color: white;
+    padding: 12px 20px;
     border-radius: 6px;
-    font-size: 15px;
+    z-index: 1000;
+    max-width: 300px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease;
 }
 
-/* 移动端特定优化 */
-.hidden {
-    display: none !important;
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 
-/* 移动端底部安全区域 */
-@supports (padding: max(0px)) {
-    .message-input {
-        padding-bottom: max(16px, env(safe-area-inset-bottom));
-    }
+/* 代码样式 */
+code {
+    background: #f1f3f4;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+    font-size: 0.85rem;
 }
 
-/* 平板和桌面适配 */
-@media (min-width: 768px) {
+/* 响应式设计 */
+@media (max-width: 768px) {
     body {
-        padding: 20px;
-    }
-    
-    .app-container {
-        max-width: 1200px;
-        border-radius: 12px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        min-height: 90vh;
-    }
-    
-    .screen {
-        height: auto;
-        min-height: 90vh;
+        padding: 10px;
     }
     
     .chat-container {
-        flex-direction: row;
-        height: calc(90vh - 70px);
+        flex-direction: column;
+        height: auto;
     }
     
     .contacts-panel {
-        width: 300px;
-        max-height: none;
-        border-right: 1px solid #eee;
-        border-bottom: none;
+        width: 100%;
+        height: 200px;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .contact-search {
+        padding: 15px;
     }
     
     .contacts-list {
-        max-height: none;
+        height: 150px;
+    }
+    
+    .message {
+        max-width: 85%;
     }
     
     .message-options {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    button {
-        width: auto;
-        margin: 0;
-    }
-    
-    .contact-search button {
-        width: auto;
-    }
-}
-
-/* 大屏手机优化 */
-@media (max-width: 380px) {
-    .chat-header {
-        padding: 12px 16px;
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
         align-items: flex-start;
     }
     
     .user-info {
+        flex-direction: column;
+        gap: 10px;
         align-items: flex-start;
     }
     
-    .contact-search {
-        flex-direction: column;
+    #destroy-all {
+        font-size: 0.8rem;
+        padding: 8px 12px;
     }
 }
 
-/* 深色模式支持 */
-@media (prefers-color-scheme: dark) {
-    body {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    }
-    
-    .app-container {
-        background: #1a1a1a;
-        color: #ffffff;
-    }
-    
-    .card {
-        background: #2d2d2d;
-        border-color: #404040;
-    }
-    
-    .contacts-panel {
-        background: #2d2d2d;
-    }
-    
-    .contact-search input {
-        background: #1a1a1a;
-        border-color: #404040;
-        color: white;
-    }
-    
-    .message-input textarea {
-        background: #1a1a1a;
-        border-color: #404040;
-        color: white;
-    }
-    
-    .message.received {
-        background: #2d2d2d;
-        color: white;
-    }
-    
-    #ttl {
-        background: #1a1a1a;
-        border-color: #404040;
-        color: white;
-    }
+/* 滚动条样式 */
+.contacts-list::-webkit-scrollbar,
+.messages-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.contacts-list::-webkit-scrollbar-track,
+.messages-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.contacts-list::-webkit-scrollbar-thumb,
+.messages-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.contacts-list::-webkit-scrollbar-thumb:hover,
+.messages-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 加载状态 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 状态指示器 */
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-online {
+    background-color: #27ae60;
+}
+
+.status-connecting {
+    background-color: #f39c12;
+}
+
+.status-offline {
+    background-color: #95a5a6;
 }
