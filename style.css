@@ -1,0 +1,446 @@
+/* 移动端优先的响应式设计 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 0;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* 移动端安全区域支持 */
+.app-container {
+    max-width: 100%;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+    min-height: 100dvh; /* 动态视口高度 */
+    position: relative;
+}
+
+/* 移动端屏幕适配 */
+.screen {
+    display: none;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
+
+.screen.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 移动端身份设置 */
+#identity-setup {
+    padding: 20px;
+    text-align: center;
+    justify-content: center;
+    background: white;
+}
+
+.card {
+    background: #f8f9fa;
+    padding: 25px 20px;
+    border-radius: 16px;
+    margin-top: 0;
+    width: 100%;
+    max-width: 100%;
+    border: 1px solid #e9ecef;
+}
+
+/* 移动端按钮优化 */
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-height: 54px;
+    width: 100%;
+    margin: 8px 0;
+    touch-action: manipulation;
+}
+
+button:active {
+    transform: scale(0.98);
+    background: #5a6fd8;
+}
+
+button.danger {
+    background: #e74c3c;
+}
+
+button.danger:active {
+    background: #c0392b;
+}
+
+/* 移动端聊天头部 */
+.chat-header {
+    background: #2c3e50;
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 70px;
+    flex-shrink: 0;
+}
+
+.chat-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+#destroy-all {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 14px;
+    min-height: auto;
+}
+
+/* 移动端聊天容器 */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 70px);
+    height: calc(100dvh - 70px);
+}
+
+/* 移动端联系人面板 */
+.contacts-panel {
+    width: 100%;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+    flex-shrink: 0;
+}
+
+.contact-search {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    gap: 12px;
+}
+
+.contact-search input {
+    flex: 1;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    min-height: 50px;
+}
+
+.contact-search button {
+    width: auto;
+    min-width: 100px;
+    margin: 0;
+}
+
+.contacts-list {
+    padding: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.contact-item {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.3s;
+    border-radius: 10px;
+    margin: 4px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.contact-item:active {
+    background: #e9ecef;
+}
+
+.contact-item.active {
+    background: #667eea;
+    color: white;
+}
+
+.contact-name {
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.contact-status {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.destroy-contact {
+    width: auto;
+    padding: 6px 10px;
+    font-size: 12px;
+    min-height: auto;
+    background: #e74c3c;
+}
+
+/* 移动端聊天区域 */
+.chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+}
+
+.messages-container {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: white;
+    -webkit-overflow-scrolling: touch; /*  iOS 平滑滚动 */
+}
+
+.message {
+    margin-bottom: 16px;
+    padding: 14px 18px;
+    border-radius: 18px;
+    max-width: 85%;
+    word-wrap: break-word;
+    position: relative;
+    animation: messageAppear 0.3s ease;
+}
+
+@keyframes messageAppear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message.received {
+    background: #f1f3f4;
+    margin-right: auto;
+    border-bottom-left-radius: 6px;
+}
+
+.message.sent {
+    background: #667eea;
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 6px;
+}
+
+.message.self-destruct {
+    border: 2px solid #ff6b6b;
+    background: #fff5f5;
+}
+
+.message-content {
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+.message-time {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 4px;
+}
+
+.self-destruct-label {
+    font-size: 12px;
+    color: #e74c3c;
+    margin-top: 6px;
+    font-weight: 600;
+}
+
+/* 移动端消息输入 */
+.message-input {
+    padding: 16px;
+    border-top: 1px solid #eee;
+    background: white;
+    flex-shrink: 0;
+}
+
+.message-input textarea {
+    width: 100%;
+    height: 80px;
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    resize: none;
+    font-size: 16px;
+    font-family: inherit;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+
+.message-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.message-options label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    padding: 8px 0;
+}
+
+#self-destruct {
+    width: 20px;
+    height: 20px;
+}
+
+#ttl {
+    width: 60px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+/* 移动端特定优化 */
+.hidden {
+    display: none !important;
+}
+
+/* 移动端底部安全区域 */
+@supports (padding: max(0px)) {
+    .message-input {
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+}
+
+/* 平板和桌面适配 */
+@media (min-width: 768px) {
+    body {
+        padding: 20px;
+    }
+    
+    .app-container {
+        max-width: 1200px;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        min-height: 90vh;
+    }
+    
+    .screen {
+        height: auto;
+        min-height: 90vh;
+    }
+    
+    .chat-container {
+        flex-direction: row;
+        height: calc(90vh - 70px);
+    }
+    
+    .contacts-panel {
+        width: 300px;
+        max-height: none;
+        border-right: 1px solid #eee;
+        border-bottom: none;
+    }
+    
+    .contacts-list {
+        max-height: none;
+    }
+    
+    .message-options {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    button {
+        width: auto;
+        margin: 0;
+    }
+    
+    .contact-search button {
+        width: auto;
+    }
+}
+
+/* 大屏手机优化 */
+@media (max-width: 380px) {
+    .chat-header {
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    
+    .user-info {
+        align-items: flex-start;
+    }
+    
+    .contact-search {
+        flex-direction: column;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+    
+    .app-container {
+        background: #1a1a1a;
+        color: #ffffff;
+    }
+    
+    .card {
+        background: #2d2d2d;
+        border-color: #404040;
+    }
+    
+    .contacts-panel {
+        background: #2d2d2d;
+    }
+    
+    .contact-search input {
+        background: #1a1a1a;
+        border-color: #404040;
+        color: white;
+    }
+    
+    .message-input textarea {
+        background: #1a1a1a;
+        border-color: #404040;
+        color: white;
+    }
+    
+    .message.received {
+        background: #2d2d2d;
+        color: white;
+    }
+    
+    #ttl {
+        background: #1a1a1a;
+        border-color: #404040;
+        color: white;
+    }
+}

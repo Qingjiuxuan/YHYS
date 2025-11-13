@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>隐私P2P聊天</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 身份创建界面 -->
+        <div id="identity-setup" class="screen active">
+            <h1>YH隐私聊天</h1>
+            <div class="card">
+                <h3>创建你的身份</h3>
+                <button id="generate-identity">生成新身份</button>
+                <div id="identity-display" class="hidden">
+                    <p>你的ID: <code id="user-did"></code></p>
+                    <button id="start-chat">开始聊天</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主聊天界面 -->
+        <div id="chat-interface" class="screen">
+            <header class="chat-header">
+                <h2>P2P 聊天</h2>
+                <div class="user-info">
+                    <span id="current-user"></span>
+                    <button id="destroy-all" class="danger">💥 销毁所有数据</button>
+                </div>
+            </header>
+
+            <div class="chat-container">
+                <!-- 联系人列表 -->
+                <div class="contacts-panel">
+                    <div class="contact-search">
+                        <input type="text" id="contact-id" placeholder="输入对方ID...">
+                        <button id="add-contact">添加联系人</button>
+                    </div>
+                    <div id="contacts-list" class="contacts-list"></div>
+                </div>
+
+                <!-- 聊天区域 -->
+                <div class="chat-area">
+                    <div id="chat-messages" class="messages-container"></div>
+                    <div class="message-input">
+                        <textarea id="message-text" placeholder="输入消息... (支持自毁消息)"></textarea>
+                        <div class="message-options">
+                            <label>
+                                <input type="checkbox" id="self-destruct"> 自毁消息
+                                <input type="number" id="ttl" value="24" min="1" max="168"> 小时后自毁
+                            </label>
+                            <button id="send-message">发送</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载必要的库 -->
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tweetnacl@1.0.3/nacl-fast.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
+    <script src="crypto.js"></script>
+    <script src="storage.js"></script>
+    <script src="p2p.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

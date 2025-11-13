@@ -1,0 +1,22 @@
+{
+  "name": "隐私P2P聊天",
+  "short_name": "P2P聊天",
+  "description": "完全隐私的P2P加密聊天应用",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
